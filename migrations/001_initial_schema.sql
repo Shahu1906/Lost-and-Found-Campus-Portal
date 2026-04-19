@@ -44,6 +44,6 @@ CREATE TABLE IF NOT EXISTS claims (
 );
 
 -- Index for faster searches
-CREATE INDEX idx_items_type ON items(type);
-CREATE INDEX idx_items_status ON items(status);
-CREATE INDEX idx_items_category ON items(category);
+CREATE INDEX IF NOT EXISTS idx_items_type ON items(type);
+CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
+CREATE INDEX IF NOT EXISTS idx_items_category ON items(category);

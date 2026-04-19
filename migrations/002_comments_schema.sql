@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS comments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_comments_item_id ON comments(item_id);
+CREATE INDEX IF NOT EXISTS idx_comments_item_id ON comments(item_id);

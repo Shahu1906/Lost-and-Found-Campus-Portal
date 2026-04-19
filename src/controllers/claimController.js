@@ -67,12 +67,12 @@ exports.getClaimsByItem = async (req, res) => {
 // Admin: Approve/Reject Claim
 exports.updateClaimStatus = async (req, res) => {
     const { claimId } = req.params;
-    const { status, admin_notes } = req.body; // approved, rejected, pending_verification
+    const { status, admin_notes, reason } = req.body; // approved, rejected, pending_verification, reason (rejection reason)
 
     try {
         const updatedClaim = await db.query(
-            `UPDATE claims SET status = $1, admin_notes = $2 WHERE id = $3 RETURNING *`,
-            [status, admin_notes, claimId]
+            `UPDATE claims SET status = $1, admin_notes = $2, rejection_reason = $3 WHERE id = $4 RETURNING *`,
+            [status, admin_notes, reason, claimId]
         );
 
         if (updatedClaim.rows.length === 0) return res.status(404).json({ message: "Claim not found" });
@@ -86,7 +86,8 @@ exports.updateClaimStatus = async (req, res) => {
         await triggerN8N('claim_status_updated', {
             claimId,
             status,
-            admin_notes
+            admin_notes,
+            reason
         });
 
         res.json({ success: true, data: updatedClaim.rows[0] });

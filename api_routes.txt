@@ -1,0 +1,160 @@
+Here is a complete list of all the API routes defined in the Lost and Found College App backend, along with their expected request bodies, parameters, and query strings.
+
+### Health Check
+- GET /health
+  - Body: None
+  - Description: Returns the server health status.
+
+---
+
+### Student Routes (Prefix: /api/v1/student)
+
+#### Authentication
+- POST /register
+  - Body (JSON):
+    {
+      "email": "student@college.edu",
+      "password": "hashed_password",
+      "reg_id": "STU12345",
+      "full_name": "John Doe",
+      "dob": "2000-01-01",
+      "dept": "Computer Science",
+      "div": "A"
+    }
+
+- POST /login
+  - Body (JSON):
+    {
+      "email": "student@college.edu",
+      "password": "yourpassword"
+    }
+
+- GET /profile
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Description: Fetches the logged-in student's profile.
+
+#### Items / Posts
+- POST /post-item
+  - Headers: Authorization Bearer Token
+  - Body (multipart/form-data OR JSON):
+    {
+      "type": "lost", // or "found"
+      "category": "Electronics",
+      "item_name": "iPhone 13",
+      "description": "Black phone with a clear case",
+      "location": "Library",
+      "geotag_lat": 12.345,
+      "geotag_lng": 67.890,
+      "image_data": "base64_string_optional",
+      "lost_date": "2023-10-25"
+    }
+    *Note: Also accepts an `image` file field via multer.*
+
+- GET /posts
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Query Parameters (Optional): ?category=Electronics&location=Library&date=2023-10-25&type=lost
+
+- GET /my-posts
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Description: Gets all items posted by the current user.
+
+#### Claims
+- POST /claim-item
+  - Headers: Authorization Bearer Token
+  - Body (multipart/form-data OR JSON):
+    {
+      "item_id": 12,
+      "proof_type": "photo_of_bill", // or "in_person_meet"
+      "proof_details": "base64_string_or_text_optional"
+    }
+    *Note: Also accepts a `proof_image` file field via multer.*
+
+- GET /my-claims
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Description: Retrieve all claims made by the current user.
+
+#### Comments
+- POST /posts/:itemId/comments
+  - Params: itemId
+  - Headers: Authorization Bearer Token
+  - Body (JSON):
+    {
+      "message": "Is this still available?"
+    }
+
+- GET /posts/:itemId/comments
+  - Params: itemId
+  - Body: None
+  - Headers: Authorization Bearer Token
+
+---
+
+### Admin Routes (Prefix: /api/v1/admin)
+
+#### Authentication & Management
+- POST /login
+  - Body (JSON):
+    {
+      "email": "admin@college.edu",
+      "password": "adminpassword"
+    }
+
+- POST /create-admin (Super Admin Only)
+  - Headers: Authorization Bearer Token
+  - Body (JSON):
+    {
+      "email": "newadmin@college.edu",
+      "password": "securepassword",
+      "reg_id": "ADM-002",
+      "full_name": "Jane Admin",
+      "dob": "1990-05-15",
+      "dept": "Administration",
+      "div": "HR"
+    }
+
+#### Content Moderation
+- GET /all-posts
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Description: Admin view of all posts across the system.
+
+- GET /community-view
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Query Parameters (Optional): ?category=...&location=...&date=...&type=...
+
+- PATCH /update-status/:itemId
+  - Params: itemId
+  - Headers: Authorization Bearer Token
+  - Body (JSON):
+    {
+      "status": "verified_by_admin", // or "claimed"
+      "admin_notes": "Looked into the CCTV and confirmed this was lost here."
+    }
+
+#### Claims Management
+- GET /claims/:itemId
+  - Params: itemId
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Description: View all claims made against a specific item.
+
+- PATCH /update-claim/:claimId
+  - Params: claimId
+  - Headers: Authorization Bearer Token
+  - Body (JSON):
+    {
+      "status": "approved", // or "rejected", "pending_verification"
+      "admin_notes": "Proof verified via receipt."
+    }
+
+#### User Management
+- PATCH /toggle-user/:userId (Super Admin Only)
+  - Params: userId
+  - Body: None
+  - Headers: Authorization Bearer Token
+  - Description: Activates or deactivates a user's account.
