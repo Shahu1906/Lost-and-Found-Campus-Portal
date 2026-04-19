@@ -112,3 +112,35 @@ exports.getUserClaims = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Admin: Get all claims (with status filtering)
+exports.getAllClaimsAdmin = async (req, res) => {
+    const { status } = req.query; // pending, approved, rejected, applied
+    try {
+        let query = `
+            SELECT 
+                claims.*, 
+                items.item_name, 
+                items.image_url AS item_image_url,
+                profiles.full_name AS student_name,
+                profiles.reg_id AS student_reg_id,
+                profiles.department AS student_dept
+            FROM claims
+            JOIN items ON claims.item_id = items.id
+            JOIN profiles ON claims.user_id = profiles.id
+        `;
+        const queryParams = [];
+
+        if (status) {
+            query += ` WHERE claims.status = $1`;
+            queryParams.push(status);
+        }
+
+        query += ` ORDER BY claims.created_at DESC`;
+
+        const { rows } = await db.query(query, queryParams);
+        res.json({ success: true, count: rows.length, data: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

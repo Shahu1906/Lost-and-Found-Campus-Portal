@@ -21,6 +21,7 @@ router.get('/all-posts', adminController.getAllPostsAdmin);
 router.get('/community-view', postController.getPosts); // Admin version of community view
 router.patch('/update-status/:itemId', adminController.updatePostStatus);
 router.get('/claims/:itemId', claimController.getClaimsByItem);
+router.get('/all-claims', claimController.getAllClaimsAdmin);
 router.patch('/update-claim/:claimId', claimController.updateClaimStatus);
 
 // Super Admin only
