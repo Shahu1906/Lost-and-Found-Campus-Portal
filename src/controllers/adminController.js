@@ -1,7 +1,8 @@
 const db = require('../config/db');
 const { triggerN8N } = require('../services/workflowService');
 const bcrypt = require('bcryptjs');
-const { registerSchema } = require('../utils/validator');
+const { registerSchema, handoverSchema } = require('../utils/validator');
+const { uploadImageBuffer } = require('../utils/imageUploader');
 
 // Create a new admin (Only allowed for the hardcoded SUPER_ADMIN)
 exports.createAdmin = async (req, res) => {
@@ -126,6 +127,54 @@ exports.toggleUserActivation = async (req, res) => {
             is_active: newStatus
         });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Admin: Handover the item to the student
+exports.handoverItem = async (req, res) => {
+    const { error } = handoverSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+
+    const { item_id, claim_id, latitude, longitude } = req.body;
+
+    try {
+        // 1. Verify claim exists and is linked to the item
+        const claim = await db.query('SELECT * FROM claims WHERE id = $1 AND item_id = $2', [claim_id, item_id]);
+        if (claim.rows.length === 0) return res.status(404).json({ message: "Claim not found for this item" });
+
+        // 2. Handle handover photo
+        let handoverPhotoUrl = '';
+        if (req.file) {
+            handoverPhotoUrl = await uploadImageBuffer(req.file.buffer);
+        }
+
+        // 3. Update claim with handover details
+        await db.query(
+            `UPDATE claims SET handover_lat = $1, handover_lng = $2, handover_photo_url = $3, handed_over_at = CURRENT_TIMESTAMP 
+             WHERE id = $4`,
+            [latitude, longitude, handoverPhotoUrl, claim_id]
+        );
+
+        // 4. Update item status to 'returned'
+        const updatedItem = await db.query(
+            `UPDATE items SET status = $1 WHERE id = $2 RETURNING *`,
+            ['returned', item_id]
+        );
+
+        // 5. Trigger n8n workflow for final handover
+        await triggerN8N('item_handed_over', {
+            itemId: item_id,
+            claimId: claim_id,
+            latitude,
+            longitude,
+            handoverPhotoUrl,
+            item: updatedItem.rows[0]
+        });
+
+        res.json({ success: true, message: "Item successfully handed over", data: updatedItem.rows[0] });
+    } catch (err) {
+        console.error('Handover Error:', err);
         res.status(500).json({ error: err.message });
     }
 };

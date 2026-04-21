@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const postController = require('../controllers/postController');
 const claimController = require('../controllers/claimController');
 const commentController = require('../controllers/commentController');
+const foundReportController = require('../controllers/foundReportController');
 const authMiddleware = require('../middleware/authMiddleware');
 const uploadMiddleware = require('../middleware/uploadMiddleware');
 
@@ -18,6 +19,8 @@ router.get('/posts', authMiddleware, postController.getPosts);
 router.get('/my-posts', authMiddleware, postController.getUserPosts);
 router.post('/claim-item', authMiddleware, uploadMiddleware.single('proof_image'), claimController.submitClaim);
 router.get('/my-claims', authMiddleware, claimController.getUserClaims);
+
+router.post('/report-found', authMiddleware, uploadMiddleware.single('image'), foundReportController.submitFoundReport);
 
 router.post('/posts/:itemId/comments', authMiddleware, commentController.addComment);
 router.get('/posts/:itemId/comments', authMiddleware, commentController.getComments);

@@ -32,8 +32,29 @@ const claimSchema = Joi.object({
     proof_details: Joi.string().optional().allow('') // Optional because the file might be sent via multer form-data
 });
 
+const foundReportSchema = Joi.object({
+    item_id: Joi.number().required(),
+    submitted_location: Joi.string().required(),
+    description: Joi.string().optional().allow('')
+});
+
+const updateFoundReportSchema = Joi.object({
+    status: Joi.string().valid('approved', 'rejected').required(),
+    reason: Joi.string().optional().allow('')
+});
+
+const handoverSchema = Joi.object({
+    item_id: Joi.number().required(),
+    claim_id: Joi.number().required(),
+    latitude: Joi.number().required(),
+    longitude: Joi.number().required()
+});
+
 module.exports = {
     registerSchema,
     postSchema,
-    claimSchema
+    claimSchema,
+    foundReportSchema,
+    updateFoundReportSchema,
+    handoverSchema
 };
